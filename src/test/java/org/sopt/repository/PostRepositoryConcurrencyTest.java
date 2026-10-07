@@ -34,7 +34,6 @@ class PostRepositoryConcurrencyTest {
         latch.await();
         executor.shutdown();
 
-        // id가 하나라도 중복되면 Map에서 덮어써져 1000개보다 적어진다.
         assertEquals(threadCount, postRepository.findAll().size());
     }
 }

@@ -12,9 +12,6 @@ import org.sopt.view.OutputView;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * 클라이언트. 서버(PostController)에 요청을 보내고 ApiResponse를 받아 View로 출력한다.
- */
 public class Main {
     private final PostController server;
     private final InputView inputView;

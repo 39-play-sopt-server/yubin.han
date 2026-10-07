@@ -14,9 +14,6 @@ import org.sopt.service.PostService;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * 서버의 진입점. 클라이언트의 요청을 받아 항상 ApiResponse로 응답하며, View는 알지 못한다.
- */
 public class PostController {
     private final PostService postService;
 
@@ -61,7 +58,6 @@ public class PostController {
         return handle(() -> ApiResponse.success(SuccessMessage.CATEGORY_LIST_READ, postService.getCategories()));
     }
 
-    // 예외가 클라이언트까지 넘어가지 않도록 여기서 실패 응답으로 변환한다.
     private <T> ApiResponse<T> handle(Supplier<ApiResponse<T>> action) {
         try {
             return action.get();

@@ -42,7 +42,6 @@ public class Post {
         viewCount++;
     }
 
-    // 객체가 스스로 자신의 상태를 검증한다 → 잘못된 Post는 애초에 만들어질 수 없다.
     private void validate(String title, String content) {
         if (title == null || title.isBlank()) {
             throw new InvalidPostException(ErrorMessage.EMPTY_TITLE);
