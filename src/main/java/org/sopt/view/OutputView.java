@@ -23,15 +23,15 @@ public class OutputView {
     }
 
     public void printPost(PostResponse post) {
-        System.out.print("\n=== 게시글 ===");
-        System.out.print("번호: " + post.id());
-        System.out.print("카테고리: " + post.category());
-        System.out.print("제목: " + post.title());
-        System.out.print("작성자: " + post.author());
-        System.out.print("내용: " + post.content());
-        System.out.print("조회수: " + post.viewCount());
-        System.out.print("작성일: " + post.createdAt().format(FORMATTER));
-        System.out.print("수정일: " + post.updatedAt().format(FORMATTER));
+        System.out.println("\n=== 게시글 ===");
+        System.out.println("번호: " + post.id());
+        System.out.println("카테고리: " + post.category());
+        System.out.println("제목: " + post.title());
+        System.out.println("작성자: " + post.author());
+        System.out.println("내용: " + post.content());
+        System.out.println("조회수: " + post.viewCount());
+        System.out.println("작성일: " + post.createdAt().format(FORMATTER));
+        System.out.println("수정일: " + post.updatedAt().format(FORMATTER));
     }
 
     public void printMessage(String message) {
