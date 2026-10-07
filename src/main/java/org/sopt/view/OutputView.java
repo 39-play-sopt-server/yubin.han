@@ -11,7 +11,7 @@ public class OutputView {
 
     public void printPosts(List<PostSummaryResponse> posts) {
         if (posts.isEmpty()) {
-            System.out.print("게시글이 없습니다.");
+            System.out.println("게시글이 없습니다.");
             return;
         }
         System.out.println("\n=== 게시글 목록 ===");
