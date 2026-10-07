@@ -1,6 +1,8 @@
 package org.sopt.service;
 
+import org.sopt.domain.Category;
 import org.sopt.domain.Post;
+import org.sopt.dto.CategoryResponse;
 import org.sopt.dto.PostCreateRequest;
 import org.sopt.dto.PostResponse;
 import org.sopt.dto.PostSummaryResponse;
@@ -8,6 +10,7 @@ import org.sopt.dto.PostUpdateRequest;
 import org.sopt.exception.PostNotFoundException;
 import org.sopt.repository.PostRepository;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class PostService {
@@ -52,6 +55,12 @@ public class PostService {
     public void deletePost(Long id) {
         Post post = findPost(id);
         postRepository.delete(post);
+    }
+
+    public List<CategoryResponse> getCategories() {
+        return Arrays.stream(Category.values())
+                .map(CategoryResponse::from)
+                .toList();
     }
 
     private Post findPost(Long id) {
