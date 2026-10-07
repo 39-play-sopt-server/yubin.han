@@ -1,6 +1,4 @@
 package org.sopt.dto;
 
-import org.sopt.domain.Category;
-
-public record PostCreateRequest(Category category, String title, String content, String author) {
+public record PostCreateRequest(int category, String title, String content, String author) {
 }

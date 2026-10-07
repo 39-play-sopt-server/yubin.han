@@ -23,7 +23,7 @@ public class PostService {
     public Long createPost(PostCreateRequest request) {
         Post post = new Post(
                 postRepository.generateId(),
-                request.category(),
+                Category.from(request.category()),
                 request.title(),
                 request.content(),
                 request.author()
@@ -49,7 +49,7 @@ public class PostService {
 
     public void updatePost(Long id, PostUpdateRequest request) {
         Post post = findPost(id);
-        post.update(request.category(), request.title(), request.content());
+        post.update(Category.from(request.category()), request.title(), request.content());
     }
 
     public void deletePost(Long id) {

@@ -1,92 +1,74 @@
 package org.sopt.controller;
 
-import org.sopt.domain.Category;
+import org.sopt.common.ApiResponse;
+import org.sopt.common.SuccessMessage;
+import org.sopt.dto.CategoryResponse;
 import org.sopt.dto.PostCreateRequest;
+import org.sopt.dto.PostResponse;
+import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
 import org.sopt.exception.BoardException;
 import org.sopt.exception.ErrorMessage;
-import org.sopt.exception.InvalidInputException;
 import org.sopt.service.PostService;
-import org.sopt.view.InputView;
-import org.sopt.view.OutputView;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
- * 사용자의 메뉴 선택에 따라 흐름만 제어한다.
- * 실제 로직은 Service에, 입출력은 View에 맡긴다.
+ * 서버의 진입점. 클라이언트의 요청을 받아 항상 ApiResponse로 응답하며, View는 알지 못한다.
  */
 public class PostController {
-    private static final int EXIT = 6;
-
     private final PostService postService;
-    private final InputView inputView;
-    private final OutputView outputView;
 
-    public PostController(PostService postService, InputView inputView, OutputView outputView) {
+    public PostController(PostService postService) {
         this.postService = postService;
-        this.inputView = inputView;
-        this.outputView = outputView;
     }
 
-    public void run() {
-        while (true) {
-            try {
-                int command = inputView.inputCommand();
-                if (command == EXIT) {
-                    outputView.printMessage("프로그램을 종료합니다.");
-                    return;
-                }
-                handle(command);
-            } catch (BoardException e) {
-                // 하위 계층에서 던진 예외를 한 곳에서 잡아 사용자에게 보여준다.
-                outputView.printError(e.getMessage());
-            }
+    public ApiResponse<Long> createPost(PostCreateRequest request) {
+        return handle(() -> ApiResponse.success(SuccessMessage.POST_CREATED, postService.createPost(request)));
+    }
+
+    public ApiResponse<List<PostSummaryResponse>> getPosts() {
+        return handle(() -> ApiResponse.success(SuccessMessage.POST_LIST_READ, postService.getPosts()));
+    }
+
+    public ApiResponse<PostResponse> getPost(Long id) {
+        return handle(() -> ApiResponse.success(SuccessMessage.POST_READ, postService.getPost(id)));
+    }
+
+    public ApiResponse<Void> checkPostExists(Long id) {
+        return handle(() -> {
+            postService.validatePostExists(id);
+            return ApiResponse.success(SuccessMessage.POST_EXISTS);
+        });
+    }
+
+    public ApiResponse<Void> updatePost(Long id, PostUpdateRequest request) {
+        return handle(() -> {
+            postService.updatePost(id, request);
+            return ApiResponse.success(SuccessMessage.POST_UPDATED);
+        });
+    }
+
+    public ApiResponse<Void> deletePost(Long id) {
+        return handle(() -> {
+            postService.deletePost(id);
+            return ApiResponse.success(SuccessMessage.POST_DELETED);
+        });
+    }
+
+    public ApiResponse<List<CategoryResponse>> getCategories() {
+        return handle(() -> ApiResponse.success(SuccessMessage.CATEGORY_LIST_READ, postService.getCategories()));
+    }
+
+    // 예외가 클라이언트까지 넘어가지 않도록 여기서 실패 응답으로 변환한다.
+    private <T> ApiResponse<T> handle(Supplier<ApiResponse<T>> action) {
+        try {
+            return action.get();
+        } catch (BoardException e) {
+            return ApiResponse.fail(e.getErrorMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(ErrorMessage.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private void handle(int command) {
-        switch (command) {
-            case 1 -> createPost();
-            case 2 -> readPosts();
-            case 3 -> readPost();
-            case 4 -> updatePost();
-            case 5 -> deletePost();
-            default -> throw new InvalidInputException(ErrorMessage.INVALID_COMMAND);
-        }
-    }
-
-    private void createPost() {
-        Category category = Category.from(inputView.inputCategory());
-        String title = inputView.inputTitle();
-        String content = inputView.inputContent();
-        String author = inputView.inputAuthor();
-
-        Long id = postService.createPost(new PostCreateRequest(category, title, content, author));
-        outputView.printMessage(id + "번 게시글이 작성되었습니다.");
-    }
-
-    private void readPosts() {
-        outputView.printPosts(postService.getPosts());
-    }
-
-    private void readPost() {
-        long id = inputView.inputPostId("조회");
-        outputView.printPost(postService.getPost(id));
-    }
-
-    private void updatePost() {
-        long id = inputView.inputPostId("수정");
-        postService.validatePostExists(id); // 없는 글이면 내용 입력 전에 바로 알려준다
-        Category category = Category.from(inputView.inputCategory());
-        String title = inputView.inputTitle();
-        String content = inputView.inputContent();
-
-        postService.updatePost(id, new PostUpdateRequest(category, title, content));
-        outputView.printMessage("게시글이 수정되었습니다.");
-    }
-
-    private void deletePost() {
-        long id = inputView.inputPostId("삭제");
-        postService.deletePost(id);
-        outputView.printMessage("게시글이 삭제되었습니다.");
     }
 }

@@ -38,7 +38,7 @@ public class OutputView {
         System.out.println(message);
     }
 
-    public void printError(String message) {
-        System.out.println("[ERROR] " + message);
+    public void printError(int status, String message) {
+        System.out.println("[ERROR " + status + "] " + message);
     }
 }
