@@ -1,0 +1,44 @@
+package org.sopt.view;
+
+import org.sopt.dto.PostResponse;
+import org.sopt.dto.PostSummaryResponse;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+public class OutputView {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public void printPosts(List<PostSummaryResponse> posts) {
+        if (posts.isEmpty()) {
+            System.out.println("게시글이 없습니다.");
+            return;
+        }
+        System.out.println("\n=== 게시글 목록 ===");
+        for (PostSummaryResponse post : posts) {
+            System.out.printf("%d. [%s] %s - %s (조회 %d)%n",
+                    post.id(), post.category(), post.title(),
+                    post.author(), post.viewCount());
+        }
+    }
+
+    public void printPost(PostResponse post) {
+        System.out.println("\n=== 게시글 ===");
+        System.out.println("번호: " + post.id());
+        System.out.println("카테고리: " + post.category());
+        System.out.println("제목: " + post.title());
+        System.out.println("작성자: " + post.author());
+        System.out.println("내용: " + post.content());
+        System.out.println("조회수: " + post.viewCount());
+        System.out.println("작성일: " + post.createdAt().format(FORMATTER));
+        System.out.println("수정일: " + post.updatedAt().format(FORMATTER));
+    }
+
+    public void printMessage(String message) {
+        System.out.println(message);
+    }
+
+    public void printError(int status, String message) {
+        System.out.println("[ERROR " + status + "] " + message);
+    }
+}
