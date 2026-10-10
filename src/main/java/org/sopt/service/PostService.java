@@ -45,10 +45,6 @@ public class PostService {
         return PostResponse.from(post);
     }
 
-    public void validatePostExists(Long id) {
-        findPost(id);
-    }
-
     public void updatePost(Long id, PostUpdateRequest request) {
         Post post = findPost(id);
         post.update(Category.from(request.category()), request.title(), request.content());
