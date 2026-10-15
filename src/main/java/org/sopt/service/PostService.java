@@ -9,10 +9,12 @@ import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
 import org.sopt.exception.PostNotFoundException;
 import org.sopt.repository.PostRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Service
 public class PostService {
     private final PostRepository postRepository;
 
@@ -41,10 +43,6 @@ public class PostService {
         Post post = findPost(id);
         post.increaseViewCount();
         return PostResponse.from(post);
-    }
-
-    public void validatePostExists(Long id) {
-        findPost(id);
     }
 
     public void updatePost(Long id, PostUpdateRequest request) {

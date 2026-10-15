@@ -1,64 +1,78 @@
 package org.sopt.controller;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.sopt.common.ApiResponse;
-import org.sopt.dto.PostCreateRequest;
-import org.sopt.dto.PostResponse;
-import org.sopt.repository.PostRepository;
-import org.sopt.service.PostService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 class PostControllerTest {
-    private PostController postController;
 
-    @BeforeEach
-    void setUp() {
-        postController = new PostController(new PostService(new PostRepository()));
-    }
+    @Autowired
+    private MockMvcTester mvc;
 
     @Test
-    @DisplayName("게시글 작성에 성공하면 201 응답과 생성된 id를 반환한다")
+    @DisplayName("게시글 작성에 성공하면 201 응답을 반환한다")
     void createPost() {
-        ApiResponse<Long> response = postController.createPost(new PostCreateRequest(1, "제목", "내용", "작성자"));
+        MvcTestResult result = createPost(1, "제목", "내용", "작성자");
 
-        assertTrue(response.success());
-        assertEquals(201, response.status());
-        assertEquals(1L, response.data());
+        assertThat(result).hasStatus(HttpStatus.CREATED);
+        assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(true);
+        assertThat(result).bodyJson().extractingPath("$.data").isNotNull();
     }
 
     @Test
-    @DisplayName("제목이 비어있으면 예외 대신 400 실패 응답을 반환한다")
+    @DisplayName("제목이 비어있으면 400 실패 응답을 반환한다")
     void createPostWithBlankTitle() {
-        ApiResponse<Long> response = postController.createPost(new PostCreateRequest(1, " ", "내용", "작성자"));
+        MvcTestResult result = createPost(1, " ", "내용", "작성자");
 
-        assertFalse(response.success());
-        assertEquals(400, response.status());
-        assertEquals("제목을 입력해주세요.", response.message());
-        assertNull(response.data());
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(false);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("제목을 입력해주세요.");
     }
 
     @Test
     @DisplayName("존재하지 않는 카테고리로 작성하면 400 실패 응답을 반환한다")
     void createPostWithInvalidCategory() {
-        ApiResponse<Long> response = postController.createPost(new PostCreateRequest(99, "제목", "내용", "작성자"));
+        MvcTestResult result = createPost(99, "제목", "내용", "작성자");
 
-        assertFalse(response.success());
-        assertEquals(400, response.status());
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 카테고리입니다.");
     }
 
     @Test
     @DisplayName("존재하지 않는 게시글을 조회하면 404 실패 응답을 반환한다")
     void getPostNotFound() {
-        ApiResponse<PostResponse> response = postController.getPost(100L);
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/{postId}", 100_000).exchange();
 
-        assertFalse(response.success());
-        assertEquals(404, response.status());
-        assertEquals("존재하지 않는 게시글입니다.", response.message());
+        assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 게시글입니다.");
+    }
+
+    @Test
+    @DisplayName("게시글 id가 숫자가 아니면 400 실패 응답을 반환한다")
+    void getPostWithInvalidId() {
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/abc").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("잘못된 요청입니다.");
+    }
+
+    private MvcTestResult createPost(int category, String title, String content, String author) {
+        String body = """
+                {"category": %d, "title": "%s", "content": "%s", "author": "%s"}
+                """.formatted(category, title, content, author);
+        return mvc.post().uri("/api/v1/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .exchange();
     }
 }

@@ -1,6 +1,7 @@
 package org.sopt.repository;
 
 import org.sopt.domain.Post;
+import org.springframework.stereotype.Repository;
 
 import java.util.Comparator;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-
+@Repository
 public class PostRepository {
     private final Map<Long, Post> store = new ConcurrentHashMap<>();
     private final AtomicLong sequence = new AtomicLong(0L);

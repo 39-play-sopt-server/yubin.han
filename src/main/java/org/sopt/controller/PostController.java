@@ -2,18 +2,25 @@ package org.sopt.controller;
 
 import org.sopt.common.ApiResponse;
 import org.sopt.common.SuccessMessage;
-import org.sopt.dto.CategoryResponse;
 import org.sopt.dto.PostCreateRequest;
 import org.sopt.dto.PostResponse;
 import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
-import org.sopt.exception.BoardException;
-import org.sopt.exception.ErrorMessage;
 import org.sopt.service.PostService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.function.Supplier;
 
+@RestController
+@RequestMapping("/api/v1/posts")
 public class PostController {
     private final PostService postService;
 
@@ -21,50 +28,38 @@ public class PostController {
         this.postService = postService;
     }
 
-    public ApiResponse<Long> createPost(PostCreateRequest request) {
-        return handle(() -> ApiResponse.success(SuccessMessage.POST_CREATED, postService.createPost(request)));
+    @PostMapping
+    public ResponseEntity<ApiResponse<Long>> createPost(@RequestBody PostCreateRequest request) {
+        return toResponse(SuccessMessage.POST_CREATED, postService.createPost(request));
     }
 
-    public ApiResponse<List<PostSummaryResponse>> getPosts() {
-        return handle(() -> ApiResponse.success(SuccessMessage.POST_LIST_READ, postService.getPosts()));
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PostSummaryResponse>>> getPosts() {
+        return toResponse(SuccessMessage.POST_LIST_READ, postService.getPosts());
     }
 
-    public ApiResponse<PostResponse> getPost(Long id) {
-        return handle(() -> ApiResponse.success(SuccessMessage.POST_READ, postService.getPost(id)));
+    @GetMapping("/{postId}")
+    public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable Long postId) {
+        return toResponse(SuccessMessage.POST_READ, postService.getPost(postId));
     }
 
-    public ApiResponse<Void> checkPostExists(Long id) {
-        return handle(() -> {
-            postService.validatePostExists(id);
-            return ApiResponse.success(SuccessMessage.POST_EXISTS);
-        });
+    @PutMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> updatePost(
+            @PathVariable Long postId,
+            @RequestBody PostUpdateRequest request
+    ) {
+        postService.updatePost(postId, request);
+        return toResponse(SuccessMessage.POST_UPDATED, null);
     }
 
-    public ApiResponse<Void> updatePost(Long id, PostUpdateRequest request) {
-        return handle(() -> {
-            postService.updatePost(id, request);
-            return ApiResponse.success(SuccessMessage.POST_UPDATED);
-        });
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
+        postService.deletePost(postId);
+        return toResponse(SuccessMessage.POST_DELETED, null);
     }
 
-    public ApiResponse<Void> deletePost(Long id) {
-        return handle(() -> {
-            postService.deletePost(id);
-            return ApiResponse.success(SuccessMessage.POST_DELETED);
-        });
-    }
-
-    public ApiResponse<List<CategoryResponse>> getCategories() {
-        return handle(() -> ApiResponse.success(SuccessMessage.CATEGORY_LIST_READ, postService.getCategories()));
-    }
-
-    private <T> ApiResponse<T> handle(Supplier<ApiResponse<T>> action) {
-        try {
-            return action.get();
-        } catch (BoardException e) {
-            return ApiResponse.fail(e.getErrorMessage());
-        } catch (RuntimeException e) {
-            return ApiResponse.fail(ErrorMessage.INTERNAL_SERVER_ERROR);
-        }
+    private <T> ResponseEntity<ApiResponse<T>> toResponse(SuccessMessage successMessage, T data) {
+        return ResponseEntity.status(successMessage.getStatus())
+                .body(ApiResponse.success(successMessage, data));
     }
 }
