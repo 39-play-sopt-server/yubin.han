@@ -1,5 +1,6 @@
 package org.sopt.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
+
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,6 +67,37 @@ class PostControllerTest {
 
         assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("잘못된 요청입니다.");
+    }
+
+    @Test
+    @DisplayName("게시글을 상세 조회할 때마다 조회수가 1씩 증가한다")
+    void increaseViewCount() throws Exception {
+        String createBody = createPost(1, "제목", "내용", "작성자").getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Number postId = JsonPath.read(createBody, "$.data");
+
+        mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
+
+        assertThat(result).bodyJson().extractingPath("$.data.viewCount").isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 API를 호출하면 공통 응답 형식의 404를 반환한다")
+    void apiNotFound() {
+        MvcTestResult result = mvc.get().uri("/api/v1/unknown").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(false);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 API입니다.");
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 HTTP 메서드로 호출하면 공통 응답 형식의 405를 반환한다")
+    void methodNotAllowed() {
+        MvcTestResult result = mvc.patch().uri("/api/v1/posts/1").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("지원하지 않는 HTTP 메서드입니다.");
     }
 
     private MvcTestResult createPost(int category, String title, String content, String author) {
