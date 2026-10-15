@@ -4,6 +4,7 @@ import org.sopt.common.ApiResponse;
 import org.sopt.common.SuccessMessage;
 import org.sopt.dto.CategoryResponse;
 import org.sopt.service.PostService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +21,9 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ApiResponse<List<CategoryResponse>> getCategories() {
-        return ApiResponse.success(SuccessMessage.CATEGORY_LIST_READ, postService.getCategories());
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
+        SuccessMessage successMessage = SuccessMessage.CATEGORY_LIST_READ;
+        return ResponseEntity.status(successMessage.getStatus())
+                .body(ApiResponse.success(successMessage, postService.getCategories()));
     }
 }
