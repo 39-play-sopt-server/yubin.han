@@ -1,26 +1,53 @@
 package org.sopt.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import org.sopt.exception.ErrorMessage;
 import org.sopt.exception.InvalidPostException;
 
 import java.time.LocalDateTime;
 
+@Entity
 public class Post {
     private static final int MAX_TITLE_LENGTH = 30;
 
-    private final Long id;
-    private final String author;
-    private final LocalDateTime createdAt;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Category category;
+
+    @Column(nullable = false, length = MAX_TITLE_LENGTH)
     private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(nullable = false)
+    private String author;
+
+    @Column(nullable = false)
     private int viewCount;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public Post(Long id, Category category, String title, String content, String author) {
+    protected Post() {
+    }
+
+    public Post(Category category, String title, String content, String author) {
         validate(title, content);
         validateAuthor(author);
-        this.id = id;
         this.category = category;
         this.title = title;
         this.content = content;

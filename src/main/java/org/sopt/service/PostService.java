@@ -24,7 +24,6 @@ public class PostService {
 
     public Long createPost(PostCreateRequest request) {
         Post post = new Post(
-                postRepository.generateId(),
                 Category.from(request.category()),
                 request.title(),
                 request.content(),
@@ -34,7 +33,7 @@ public class PostService {
     }
 
     public List<PostSummaryResponse> getPosts() {
-        return postRepository.findAll().stream()
+        return postRepository.findAllByOrderByIdAsc().stream()
                 .map(PostSummaryResponse::from)
                 .toList();
     }
