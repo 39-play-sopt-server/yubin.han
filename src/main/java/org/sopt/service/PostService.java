@@ -10,11 +10,13 @@ import org.sopt.dto.PostUpdateRequest;
 import org.sopt.exception.PostNotFoundException;
 import org.sopt.repository.PostRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
 
@@ -22,6 +24,7 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
+    @Transactional
     public Long createPost(PostCreateRequest request) {
         Post post = new Post(
                 Category.from(request.category()),
@@ -38,17 +41,20 @@ public class PostService {
                 .toList();
     }
 
+    @Transactional
     public PostResponse getPost(Long id) {
         Post post = findPost(id);
         post.increaseViewCount();
         return PostResponse.from(post);
     }
 
+    @Transactional
     public void updatePost(Long id, PostUpdateRequest request) {
         Post post = findPost(id);
         post.update(Category.from(request.category()), request.title(), request.content());
     }
 
+    @Transactional
     public void deletePost(Long id) {
         Post post = findPost(id);
         postRepository.delete(post);
