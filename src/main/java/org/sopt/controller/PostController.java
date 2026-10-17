@@ -1,5 +1,7 @@
 package org.sopt.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.sopt.common.ApiResponse;
 import org.sopt.common.SuccessMessage;
 import org.sopt.dto.PostCreateRequest;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "Post", description = "게시글 API")
 @RestController
 @RequestMapping("/api/v1/posts")
 public class PostController {
@@ -28,21 +31,25 @@ public class PostController {
         this.postService = postService;
     }
 
+    @Operation(summary = "게시글 작성")
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createPost(@RequestBody PostCreateRequest request) {
         return toResponse(SuccessMessage.POST_CREATED, postService.createPost(request));
     }
 
+    @Operation(summary = "게시글 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostSummaryResponse>>> getPosts() {
         return toResponse(SuccessMessage.POST_LIST_READ, postService.getPosts());
     }
 
+    @Operation(summary = "게시글 상세 조회 (조회수 1 증가)")
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable Long postId) {
         return toResponse(SuccessMessage.POST_READ, postService.getPost(postId));
     }
 
+    @Operation(summary = "게시글 수정")
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> updatePost(
             @PathVariable Long postId,
@@ -52,6 +59,7 @@ public class PostController {
         return toResponse(SuccessMessage.POST_UPDATED, null);
     }
 
+    @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
