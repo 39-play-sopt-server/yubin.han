@@ -82,6 +82,25 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("게시글을 수정하면 DB에 변경 내용이 반영된다")
+    void updatePost() throws Exception {
+        String createBody = createPost(1, "제목", "내용", "작성자").getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Number postId = JsonPath.read(createBody, "$.data");
+
+        MvcTestResult updateResult = mvc.put().uri("/api/v1/posts/{postId}", postId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"category": 2, "title": "수정된 제목", "content": "수정된 내용"}
+                        """)
+                .exchange();
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
+
+        assertThat(updateResult).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyJson().extractingPath("$.data.title").isEqualTo("수정된 제목");
+        assertThat(result).bodyJson().extractingPath("$.data.category").isEqualTo("자유");
+    }
+
+    @Test
     @DisplayName("존재하지 않는 API를 호출하면 공통 응답 형식의 404를 반환한다")
     void apiNotFound() {
         MvcTestResult result = mvc.get().uri("/api/v1/unknown").exchange();
