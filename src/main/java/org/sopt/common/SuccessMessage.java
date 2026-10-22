@@ -6,6 +6,8 @@ public enum SuccessMessage {
     POST_READ(200, "게시글 조회에 성공했습니다."),
     POST_UPDATED(200, "게시글이 수정되었습니다."),
     POST_DELETED(200, "게시글이 삭제되었습니다."),
+    MEMBER_CREATED(201, "회원이 생성되었습니다."),
+    MEMBER_DELETED(200, "회원이 삭제되었습니다."),
     CATEGORY_LIST_READ(200, "카테고리 목록 조회에 성공했습니다.");
 
     private final int status;
