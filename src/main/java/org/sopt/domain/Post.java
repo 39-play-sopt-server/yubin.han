@@ -13,7 +13,7 @@ import org.sopt.exception.InvalidPostException;
 import java.time.LocalDateTime;
 
 @Entity
-public class Post {
+public class Post extends BaseEntity {
     private static final int MAX_TITLE_LENGTH = 30;
 
     @Id
@@ -36,9 +36,6 @@ public class Post {
     @Column(nullable = false)
     private int viewCount;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
@@ -53,8 +50,7 @@ public class Post {
         this.content = content;
         this.author = author;
         this.viewCount = 0;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = createdAt;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void update(Category category, String title, String content) {
@@ -109,10 +105,6 @@ public class Post {
 
     public int getViewCount() {
         return viewCount;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
