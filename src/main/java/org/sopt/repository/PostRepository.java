@@ -1,40 +1,11 @@
 package org.sopt.repository;
 
 import org.sopt.domain.Post;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
-@Repository
-public class PostRepository {
-    private final Map<Long, Post> store = new ConcurrentHashMap<>();
-    private final AtomicLong sequence = new AtomicLong(0L);
+public interface PostRepository extends JpaRepository<Post, Long> {
 
-    public Long generateId() {
-        return sequence.incrementAndGet();
-    }
-
-    public Post save(Post post) {
-        store.put(post.getId(), post);
-        return post;
-    }
-
-    public List<Post> findAll() {
-        return store.values().stream()
-                .sorted(Comparator.comparing(Post::getId))
-                .toList();
-    }
-
-    public Optional<Post> findById(Long id) {
-        return Optional.ofNullable(store.get(id));
-    }
-
-    public void delete(Post post) {
-        store.remove(post.getId());
-    }
+    List<Post> findAllByOrderByIdAsc();
 }
