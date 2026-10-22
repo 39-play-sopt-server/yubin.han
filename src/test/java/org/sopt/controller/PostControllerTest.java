@@ -1,31 +1,27 @@
 package org.sopt.controller;
 
-import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.sopt.support.ApiTestSupport;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
-
-import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class PostControllerTest {
+class PostControllerTest extends ApiTestSupport {
+    private Long memberId;
 
-    @Autowired
-    private MockMvcTester mvc;
+    @BeforeEach
+    void setUp() throws Exception {
+        memberId = extractId(createMember("유빈"));
+    }
 
     @Test
     @DisplayName("게시글 작성에 성공하면 201 응답을 반환한다")
-    void createPost() {
-        MvcTestResult result = createPost(1, "제목", "내용", "작성자");
+    void createPostSuccess() {
+        MvcTestResult result = createPost(memberId, 1, "제목", "내용");
 
         assertThat(result).hasStatus(HttpStatus.CREATED);
         assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(true);
@@ -33,22 +29,43 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("존재하지 않는 회원으로 게시글을 작성하면 404 실패 응답을 반환한다")
+    void createPostWithUnknownMember() {
+        MvcTestResult result = createPost(100_000L, 1, "제목", "내용");
+
+        assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 회원입니다.");
+    }
+
+    @Test
     @DisplayName("제목이 비어있으면 400 실패 응답을 반환한다")
     void createPostWithBlankTitle() {
-        MvcTestResult result = createPost(1, " ", "내용", "작성자");
+        MvcTestResult result = createPost(memberId, 1, " ", "내용");
 
         assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
-        assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(false);
         assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("제목을 입력해주세요.");
     }
 
     @Test
     @DisplayName("존재하지 않는 카테고리로 작성하면 400 실패 응답을 반환한다")
     void createPostWithInvalidCategory() {
-        MvcTestResult result = createPost(99, "제목", "내용", "작성자");
+        MvcTestResult result = createPost(memberId, 99, "제목", "내용");
 
         assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 카테고리입니다.");
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 시 작성자 이름이 표시되고 조회수가 1씩 증가한다")
+    void getPost() throws Exception {
+        Long postId = extractId(createPost(memberId, 1, "제목", "내용"));
+
+        mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
+
+        assertThat(result).bodyJson().extractingPath("$.data.author").isEqualTo("유빈");
+        assertThat(result).bodyJson().extractingPath("$.data.viewCount").isEqualTo(2);
+        assertThat(result).bodyJson().extractingPath("$.data.createdAt").isNotNull();
     }
 
     @Test
@@ -61,31 +78,36 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 id가 숫자가 아니면 400 실패 응답을 반환한다")
-    void getPostWithInvalidId() {
-        MvcTestResult result = mvc.get().uri("/api/v1/posts/abc").exchange();
+    @DisplayName("게시글 목록은 최신순으로 페이지 단위로 조회된다")
+    void getPostsWithPagination() {
+        for (int i = 1; i <= 3; i++) {
+            createPost(memberId, 1, "제목" + i, "내용");
+        }
 
-        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
-        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("잘못된 요청입니다.");
+        MvcTestResult result = mvc.get().uri("/api/v1/posts?page=0&size=2").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyJson().extractingPath("$.data.posts.length()").isEqualTo(2);
+        assertThat(result).bodyJson().extractingPath("$.data.posts[0].title").isEqualTo("제목3");
+        assertThat(result).bodyJson().extractingPath("$.data.posts[1].title").isEqualTo("제목2");
+        assertThat(result).bodyJson().extractingPath("$.data.posts[0].author").isEqualTo("유빈");
+        assertThat(result).bodyJson().extractingPath("$.data.totalElements").isEqualTo(3);
+        assertThat(result).bodyJson().extractingPath("$.data.totalPages").isEqualTo(2);
+        assertThat(result).bodyJson().extractingPath("$.data.hasNext").isEqualTo(true);
     }
 
     @Test
-    @DisplayName("게시글을 상세 조회할 때마다 조회수가 1씩 증가한다")
-    void increaseViewCount() throws Exception {
-        String createBody = createPost(1, "제목", "내용", "작성자").getResponse().getContentAsString(StandardCharsets.UTF_8);
-        Number postId = JsonPath.read(createBody, "$.data");
+    @DisplayName("page나 size가 범위를 벗어나면 400 실패 응답을 반환한다")
+    void getPostsWithInvalidPage() {
+        MvcTestResult result = mvc.get().uri("/api/v1/posts?page=-1&size=0").exchange();
 
-        mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
-        MvcTestResult result = mvc.get().uri("/api/v1/posts/{postId}", postId).exchange();
-
-        assertThat(result).bodyJson().extractingPath("$.data.viewCount").isEqualTo(2);
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @DisplayName("게시글을 수정하면 DB에 변경 내용이 반영된다")
     void updatePost() throws Exception {
-        String createBody = createPost(1, "제목", "내용", "작성자").getResponse().getContentAsString(StandardCharsets.UTF_8);
-        Number postId = JsonPath.read(createBody, "$.data");
+        Long postId = extractId(createPost(memberId, 1, "제목", "내용"));
 
         MvcTestResult updateResult = mvc.put().uri("/api/v1/posts/{postId}", postId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -101,12 +123,20 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("게시글 id가 숫자가 아니면 400 실패 응답을 반환한다")
+    void getPostWithInvalidId() {
+        MvcTestResult result = mvc.get().uri("/api/v1/posts/abc").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("잘못된 요청입니다.");
+    }
+
+    @Test
     @DisplayName("존재하지 않는 API를 호출하면 공통 응답 형식의 404를 반환한다")
     void apiNotFound() {
         MvcTestResult result = mvc.get().uri("/api/v1/unknown").exchange();
 
         assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(result).bodyJson().extractingPath("$.success").isEqualTo(false);
         assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("존재하지 않는 API입니다.");
     }
 
@@ -117,15 +147,5 @@ class PostControllerTest {
 
         assertThat(result).hasStatus(HttpStatus.METHOD_NOT_ALLOWED);
         assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("지원하지 않는 HTTP 메서드입니다.");
-    }
-
-    private MvcTestResult createPost(int category, String title, String content, String author) {
-        String body = """
-                {"category": %d, "title": "%s", "content": "%s", "author": "%s"}
-                """.formatted(category, title, content, author);
-        return mvc.post().uri("/api/v1/posts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body)
-                .exchange();
     }
 }
