@@ -6,7 +6,10 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import org.sopt.exception.ErrorMessage;
 import org.sopt.exception.InvalidPostException;
 
@@ -30,8 +33,9 @@ public class Post extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(nullable = false)
-    private String author;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(nullable = false)
     private int viewCount;
@@ -42,13 +46,12 @@ public class Post extends BaseEntity {
     protected Post() {
     }
 
-    public Post(Category category, String title, String content, String author) {
+    public Post(Member member, Category category, String title, String content) {
         validate(title, content);
-        validateAuthor(author);
+        this.member = member;
         this.category = category;
         this.title = title;
         this.content = content;
-        this.author = author;
         this.viewCount = 0;
         this.updatedAt = LocalDateTime.now();
     }
@@ -77,12 +80,6 @@ public class Post extends BaseEntity {
         }
     }
 
-    private void validateAuthor(String author) {
-        if (author == null || author.isBlank()) {
-            throw new InvalidPostException(ErrorMessage.EMPTY_AUTHOR);
-        }
-    }
-
     public Long getId() {
         return id;
     }
@@ -99,8 +96,8 @@ public class Post extends BaseEntity {
         return content;
     }
 
-    public String getAuthor() {
-        return author;
+    public Member getMember() {
+        return member;
     }
 
     public int getViewCount() {

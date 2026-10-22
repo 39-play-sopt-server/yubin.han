@@ -1,13 +1,16 @@
 package org.sopt.service;
 
 import org.sopt.domain.Category;
+import org.sopt.domain.Member;
 import org.sopt.domain.Post;
 import org.sopt.dto.CategoryResponse;
 import org.sopt.dto.PostCreateRequest;
 import org.sopt.dto.PostResponse;
 import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
+import org.sopt.exception.MemberNotFoundException;
 import org.sopt.exception.PostNotFoundException;
+import org.sopt.repository.MemberRepository;
 import org.sopt.repository.PostRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,18 +22,22 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
+    private final MemberRepository memberRepository;
 
-    public PostService(PostRepository postRepository) {
+    public PostService(PostRepository postRepository, MemberRepository memberRepository) {
         this.postRepository = postRepository;
+        this.memberRepository = memberRepository;
     }
 
     @Transactional
     public Long createPost(PostCreateRequest request) {
+        Member member = memberRepository.findById(request.memberId())
+                .orElseThrow(MemberNotFoundException::new);
         Post post = new Post(
+                member,
                 Category.from(request.category()),
                 request.title(),
-                request.content(),
-                request.author()
+                request.content()
         );
         return postRepository.save(post).getId();
     }

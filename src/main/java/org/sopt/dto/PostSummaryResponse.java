@@ -9,7 +9,7 @@ public record PostSummaryResponse(Long id, String category, String title, String
                 post.getId(),
                 post.getCategory().getDisplayName(),
                 post.getTitle(),
-                post.getAuthor(),
+                post.getMember().getName(),
                 post.getViewCount()
         );
     }

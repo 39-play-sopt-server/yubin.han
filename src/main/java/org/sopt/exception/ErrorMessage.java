@@ -3,7 +3,6 @@ package org.sopt.exception;
 public enum ErrorMessage {
     EMPTY_TITLE(400, "제목을 입력해주세요."),
     EMPTY_CONTENT(400, "내용을 입력해주세요."),
-    EMPTY_AUTHOR(400, "작성자를 입력해주세요."),
     TITLE_TOO_LONG(400, "제목은 30자 이하로 입력해주세요."),
     EMPTY_MEMBER_NAME(400, "회원 이름을 입력해주세요."),
     MEMBER_NAME_TOO_LONG(400, "회원 이름은 20자 이하로 입력해주세요."),
