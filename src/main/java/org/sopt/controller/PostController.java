@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.sopt.common.ApiResponse;
 import org.sopt.common.SuccessMessage;
 import org.sopt.dto.PostCreateRequest;
+import org.sopt.dto.PostPageResponse;
 import org.sopt.dto.PostResponse;
-import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
 import org.sopt.service.PostService;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @Tag(name = "Post", description = "게시글 API")
 @RestController
@@ -37,10 +36,13 @@ public class PostController {
         return toResponse(SuccessMessage.POST_CREATED, postService.createPost(request));
     }
 
-    @Operation(summary = "게시글 목록 조회")
+    @Operation(summary = "게시글 목록 조회 (최신순, 페이지네이션)")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostSummaryResponse>>> getPosts() {
-        return toResponse(SuccessMessage.POST_LIST_READ, postService.getPosts());
+    public ResponseEntity<ApiResponse<PostPageResponse>> getPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return toResponse(SuccessMessage.POST_LIST_READ, postService.getPosts(page, size));
     }
 
     @Operation(summary = "게시글 상세 조회 (조회수 1 증가)")

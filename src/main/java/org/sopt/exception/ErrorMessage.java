@@ -7,6 +7,7 @@ public enum ErrorMessage {
     EMPTY_MEMBER_NAME(400, "회원 이름을 입력해주세요."),
     MEMBER_NAME_TOO_LONG(400, "회원 이름은 20자 이하로 입력해주세요."),
     INVALID_CATEGORY(400, "존재하지 않는 카테고리입니다."),
+    INVALID_PAGE(400, "page는 0 이상, size는 1~100 사이로 입력해주세요."),
     INVALID_REQUEST(400, "잘못된 요청입니다."),
     POST_NOT_FOUND(404, "존재하지 않는 게시글입니다."),
     MEMBER_NOT_FOUND(404, "존재하지 않는 회원입니다."),

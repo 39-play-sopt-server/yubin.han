@@ -5,13 +5,17 @@ import org.sopt.domain.Member;
 import org.sopt.domain.Post;
 import org.sopt.dto.CategoryResponse;
 import org.sopt.dto.PostCreateRequest;
+import org.sopt.dto.PostPageResponse;
 import org.sopt.dto.PostResponse;
-import org.sopt.dto.PostSummaryResponse;
 import org.sopt.dto.PostUpdateRequest;
+import org.sopt.exception.ErrorMessage;
+import org.sopt.exception.InvalidInputException;
 import org.sopt.exception.MemberNotFoundException;
 import org.sopt.exception.PostNotFoundException;
 import org.sopt.repository.MemberRepository;
 import org.sopt.repository.PostRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,9 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 public class PostService {
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Sort LATEST_FIRST = Sort.by(Sort.Direction.DESC, "createdAt", "id");
+
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
 
@@ -42,10 +49,12 @@ public class PostService {
         return postRepository.save(post).getId();
     }
 
-    public List<PostSummaryResponse> getPosts() {
-        return postRepository.findAllByOrderByIdAsc().stream()
-                .map(PostSummaryResponse::from)
-                .toList();
+    public PostPageResponse getPosts(int page, int size) {
+        if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
+            throw new InvalidInputException(ErrorMessage.INVALID_PAGE);
+        }
+        PageRequest pageRequest = PageRequest.of(page, size, LATEST_FIRST);
+        return PostPageResponse.from(postRepository.findAll(pageRequest));
     }
 
     @Transactional
